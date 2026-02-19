@@ -17,6 +17,9 @@ inputs:
   registry-token:
     description: 'Cargo registry token'
     default: ''
+  trusted-publishing:
+    description: 'Use OIDC trusted publishing to authenticate with crates.io (requires id-token: write permission)'
+    default: 'false'
   dry-run:
     description: 'Skip execution cargo publish'
     default: 'false'

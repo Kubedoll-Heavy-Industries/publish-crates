@@ -11,6 +11,7 @@ import {ExecOptions, exec} from '@actions/exec'
 
 import {checkPackages, findPackages, sortPackages} from './package'
 import {awaitCrateVersion} from './crates'
+import {exchangeOidcToken} from './auth'
 import {githubHandle} from './github'
 import {delay} from './utils'
 
@@ -30,6 +31,7 @@ async function run(): Promise<void> {
         .split(/[\n\s]+/)
         .filter(arg => arg.length > 0)
     const registry_token = getInput('registry-token')
+    const trusted_publishing = getBooleanInput('trusted-publishing')
     const dry_run = getBooleanInput('dry-run')
     const check_repo = getBooleanInput('check-repo')
     const publish_delay = getIntegerInput('publish-delay')
@@ -39,7 +41,16 @@ async function run(): Promise<void> {
     )
 
     const env: EnvVars = {...(process.env as EnvVars)}
-    if (registry_token) {
+
+    if (trusted_publishing) {
+        if (registry_token) {
+            warning(
+                'Both `trusted-publishing` and `registry-token` are set. Trusted publishing takes precedence.'
+            )
+        }
+        const oidc_token = await exchangeOidcToken()
+        env.CARGO_REGISTRY_TOKEN = oidc_token
+    } else if (registry_token) {
         env.CARGO_REGISTRY_TOKEN = registry_token
     }
 
